@@ -1,0 +1,9 @@
+# node.js
+node_modules
+data
+*-lock.json
+*.lock
+*.bin
+
+*.nogit
+*.old
