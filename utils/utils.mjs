@@ -88,3 +88,12 @@ export function getMerkleRoot(ids) {
 	const tree = new MerkleTree(leaves, keccak_256);
 	return base58.encode(tree.getRoot());
 }
+
+export function randomBigInt(){
+	const hexString = Array(32)
+    .fill()
+    .map(() => Math.round(Math.random() * 0xF).toString(32))
+    .join('');
+	return BigInt(`0x${hexString}`);
+}
+

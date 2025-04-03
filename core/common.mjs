@@ -7,6 +7,7 @@ import { HDKey } from "@scure/bip32";
 import { randomBytes, verify } from "crypto";
 import { keccak_256 } from "@noble/hashes/sha3";
 import { base58check } from "@scure/base";
+import { poseidon3 } from "poseidon-lite";
 
 import * as utils from "../utils/utils.mjs";
 
@@ -14,6 +15,8 @@ const base58 = base58check(keccak_256);
 
 const CHANGE = 0;
 const RECEIVE = 1;
+const SHIELDED = 2;
+
 const PRIVATE = 'm';
 const PUBLIC = 'M';
 const DERIV_PATH = (account, change) => `m/44'/1'/${account}'/${change}`
@@ -189,5 +192,31 @@ export function findNonce(block, difficulty) {
     block._id = utils.getBlockHash(block)
   } while (!verifyBlockHash(block, difficulty));
   return block;
+}
+
+
+/**
+ * Creates a shielded note
+ * @param {number} value - The amount to shield
+ * @param {string} publicShieldedKey - The recipient's public shielded key
+ * @returns {object} - The note and encrypted note
+ */
+export function createShieldedCoin(value, publicShieldedKey) {
+  const rho = utils.randomBigInt();
+  const r = utils.randomBigInt();
+  const s = utils.randomBigInt();
+  
+  const apk = publicShieldedKey;
+  const k = poseidon3([apk, rho, r]);
+  const cm = poseidon3([value, k, s]);
+  
+  const coin = { apk, value, rho, r, s, cm };
+  const encryptedCoin = {
+    amount: coin.value,
+    k: k.toString(),
+    s: s.toString(),
+    cm: cm.toString(),
+  }
+  return {coin, encryptedCoin};
 }
 

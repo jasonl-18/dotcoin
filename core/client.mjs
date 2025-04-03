@@ -6,6 +6,9 @@ import { DatabaseRead } from "../database/database-read.mjs";
 
 import * as utils from "../utils/utils.mjs";
 import * as common from "./common.mjs";
+import * as crypto from 'crypto';
+
+import { poseidon1, poseidon3 } from "poseidon-lite";
 
 export class ClientError extends Error {
   constructor(message) {
@@ -26,6 +29,9 @@ export class DotcoinClient {
     this.amount = config.amount || 100; // coinbase amount
     this.path = config.path || "data"; // database path
     this.db = new DatabaseRead(this.path);
+
+    this.shieldedPrivateKey = utils.randomBigInt()
+    this.shieldedPublicKey = poseidon1([this.shieldedPrivateKey])
   }
 
   /**
@@ -49,8 +55,10 @@ export class DotcoinClient {
     return changeKey.publicExtendedKey;
   }
 
-  /* 
-  */
+  async getShieldedPublicKey(account) {
+    return this.shieldedPrivateKey;
+  }
+
   async getAddressUtxos(address, unconfirmed = false, usable = true) {
     let transactions = await this.db.getTransactions(0, 0 , -1);
     if(unconfirmed){
@@ -192,5 +200,17 @@ export class DotcoinClient {
     block = common.findNonce(block, this.difficulty);
 
     return {block, coinbase, transactions}
+  }
+
+  async createMintTransaction(value, account) {
+    const {coin, encryptedCoin} = common.createShieldedCoin(value, this.shieldedPublicKey);
+    const tx = {
+      utxoOuts: [encryptedCoin]
+    }
+    return {coin, tx}
+  }
+
+  async createPourTransaction (value, account) {
+
   }
 }

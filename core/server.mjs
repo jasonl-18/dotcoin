@@ -32,9 +32,9 @@ export class DotcoinServer {
    */
   async addTransaction(txParams) {
     
-    await this.verifyTransaction(txParams)
+    //await this.verifyTransaction(txParams)
     await this.db.addTransaction(txParams)
-    await this.db.spendUtxos(txParams._id, txParams.utxoIns)
+    //await this.db.spendUtxos(txParams._id, txParams.utxoIns)
     return txParams
   }
 
