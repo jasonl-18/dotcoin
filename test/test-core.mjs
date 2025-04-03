@@ -1,26 +1,15 @@
 import { rmSync } from "fs";
 import chai from "chai";
-import path from 'path';
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-import * as snarkjs from "snarkjs";
-import * as fs from "fs";
-const multiplier2WitnessBuilder = await import(path.join(__dirname ,"../circuits/multiplier2/multiplier2_js/witness_calculator.js"));
-const multiplier2wasm = fs.readFileSync(path.join(__dirname, '../circuits/multiplier2/multiplier2_js/multiplier2.wasm'))
-const multiplier2zkey = fs.readFileSync(path.join(__dirname, "../zksetup/multiplier2_0001.zkey"));
-const vKey = JSON.parse(fs.readFileSync(path.join(__dirname, "../verification_key.json")))
-
 import { DotcoinClient } from "../core/client.mjs";
 import { DotcoinServer } from "../core/server.mjs";
 import { json } from "stream/consumers";
+
+import * as ZKPour from "../core/ZKPour.mjs";
 
 const expect = chai.expect;
 
 const databasePath = "data/testDb";
 
-import * as utils from "../utils/utils.mjs";
 describe("Testing Core Features", function () {
   this.timeout(10000);
   const config = {
@@ -47,11 +36,20 @@ describe("Testing Core Features", function () {
   it("it should mint a coin", async function () {
 
     const {coin, tx} = await client1.createMintTransaction(10, 0)
-    console.log(coin)
-    console.log(tx)
+    // console.log(coin)
+    // console.log(tx)
+    
 
-    const transaction = await server.addTransaction(tx);
-    console.log(JSON.stringify(await client1.db.getTransactions(0,0)))
+    // const transaction = await server.addTransaction(tx);
+    // console.log(JSON.stringify(await client1.db.getTransactions(0,0)))
+  })
+
+  it("it should create a pour transaction", async function () {
+    const { coin:oldCoin, tx:tx_mint } = await client1.createMintTransaction(10, 0)
+    const { tx:tx_pour , c1, c2 } = await client1.createPourTransaction(7, 3, client2.shieldedTransmissionKey);
+
+    const { proof, publicSignals } = await ZKPour.buildProof(client1.shieldedPrivateKey, oldCoin, c1, c2)
+    console.log(await ZKPour.verifyProof(publicSignals, proof))
   })
 
   // it("it should create the genesis block", async function () {
@@ -133,24 +131,3 @@ describe("Testing Core Features", function () {
   // });
 });
 
-
-/*
-describe("Testing Circuits", function () {
-  it("should test multiplier2", async function () {
-    const input = {
-      a: "7",
-      b: "11"
-    }
-    const builder = multiplier2WitnessBuilder.default;
-    const multiplier2WC = await builder(multiplier2wasm)
-    const witness = await multiplier2WC.calculateWTNSBin(input, 0)
-
-    const { proof, publicSignals } = await snarkjs.groth16.prove(multiplier2zkey, witness)
-    console.log("Proof:", proof);
-    console.log("Public Signals:", publicSignals);
-
-    const proofValid = await snarkjs.groth16.verify(vKey, publicSignals, proof);
-    expect(proofValid).to.be.true;
-  });
-});
-*/

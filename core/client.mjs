@@ -30,8 +30,8 @@ export class DotcoinClient {
     this.path = config.path || "data"; // database path
     this.db = new DatabaseRead(this.path);
 
-    this.shieldedPrivateKey = utils.randomBigInt()
-    this.shieldedPublicKey = poseidon1([this.shieldedPrivateKey])
+    this.shieldedPrivateKey = utils.randomBigInt() //TODO: CHANGE TO MNEMONIC BASED KEY
+    this.shieldedTransmissionKey = poseidon1([this.shieldedPrivateKey])
   }
 
   /**
@@ -53,10 +53,6 @@ export class DotcoinClient {
   async getChangeAddress (account) {
     const changeKey = await common.getChangeKeys(this.mnemonic, account);
     return changeKey.publicExtendedKey;
-  }
-
-  async getShieldedPublicKey(account) {
-    return this.shieldedPrivateKey;
   }
 
   async getAddressUtxos(address, unconfirmed = false, usable = true) {
@@ -202,15 +198,26 @@ export class DotcoinClient {
     return {block, coinbase, transactions}
   }
 
-  async createMintTransaction(value, account) {
-    const {coin, encryptedCoin} = common.createShieldedCoin(value, this.shieldedPublicKey);
+  async createMintTransaction(value) {
+    const {coin, encryptedCoin} = common.createShieldedCoin(value, this.shieldedTransmissionKey);
     const tx = {
-      utxoOuts: [encryptedCoin]
+      utxoIns: [],
+      utxoOuts: [{secrets: encryptedCoin, cm: coin.cm}]
     }
     return {coin, tx}
   }
 
-  async createPourTransaction (value, account) {
+  async createPourTransaction (value, change, recipientKey) {
+    const { coin:c1 , encryptedCoin:encryptedC1 } = common.createShieldedCoin(value, recipientKey);
+    const { coin:c2 , encryptedCoin:encryptedC2 } = common.createShieldedCoin(change, this.shieldedTransmissionKey);
 
+    const tx = {
+      utxoOuts:[
+        {secrets: encryptedC1, cm: c1.cm},
+        {secrets: encryptedC2, cm: c2.cm}
+      ]
+    }
+
+    return {tx, c1, c2}
   }
 }

@@ -213,9 +213,9 @@ export function createShieldedCoin(value, publicShieldedKey) {
   const coin = { apk, value, rho, r, s, cm };
   const encryptedCoin = {
     amount: coin.value,
-    k: k.toString(),
+    rho: rho.toString(),
+    r: r.toString(),
     s: s.toString(),
-    cm: cm.toString(),
   }
   return {coin, encryptedCoin};
 }
