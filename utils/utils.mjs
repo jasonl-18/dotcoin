@@ -6,6 +6,9 @@ import { HDKey } from "@scure/bip32";
 import { base58check } from "@scure/base";
 import { MerkleTree } from 'merkletreejs';
 
+const poseidon = require("poseidon-lite");
+const { IncrementalMerkleTree } = require("@zk-kit/incremental-merkle-tree");
+
 const base58 = base58check(keccak_256);
 
 /**
@@ -97,3 +100,26 @@ export function randomBigInt(){
 	return BigInt(`0x${hexString}`);
 }
 
+export function initMerkleTree(){
+  const tree = new IncrementalMerkleTree(poseidon, 2, 254);
+  return tree;
+}
+
+export function addCoinToTree(tree, coin){
+  const { cm } = coin
+  tree.addLeaf(cm)
+  return tree
+}
+
+export function getMerkleProof(tree, cm){
+  const index = tree.indexOf(cm)
+  const merkleProof = tree.getProof(index)
+  const treeSiblings = merkleProof.siblings.map((s) => s[0]);
+  const treePathIndices = merkleProof.pathIndices
+
+  return {
+    merkleProof,
+    treeSiblings,
+    treePathIndices
+  }
+}

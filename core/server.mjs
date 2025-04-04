@@ -24,6 +24,8 @@ export class DotcoinServer {
     this.amount = config.amount || 100; // coinbase amount
     this.path = config.path || "data";
     this.db = new DatabaseWrite(this.path);
+    this.merkleTree = utils.initMerkleTree();
+    this.nullifierSet = new Set();
   }
 
   /**
@@ -227,6 +229,8 @@ export class DotcoinServer {
   async getUtxo(address) {
     return this.db.getUtxo(address);
   }
+
+  
 
   /**
    * erase the directory that stores the NeDB files
