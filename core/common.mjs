@@ -203,20 +203,10 @@ export function findNonce(block, difficulty) {
  */
 export function createShieldedCoin(value, publicShieldedKey) {
   const rho = utils.randomBigInt();
-  const r = utils.randomBigInt();
-  const s = utils.randomBigInt();
-  
   const apk = publicShieldedKey;
-  const k = poseidon3([apk, rho, r]);
-  const cm = poseidon3([value, k, s]);
+  const cm = poseidon3([apk, value, rho]);
   
-  const coin = { apk, value, rho, r, s, cm };
-  const encryptedCoin = {
-    amount: coin.value,
-    rho: rho.toString(),
-    r: r.toString(),
-    s: s.toString(),
-  }
-  return {coin, encryptedCoin};
+  const coin = { apk, value, rho, cm };
+  return {coin};
 }
 

@@ -5,9 +5,8 @@ import { keccak_256 } from "@noble/hashes/sha3";
 import { HDKey } from "@scure/bip32";
 import { base58check } from "@scure/base";
 import { MerkleTree } from 'merkletreejs';
-
-const poseidon = require("poseidon-lite");
-const { IncrementalMerkleTree } = require("@zk-kit/incremental-merkle-tree");
+import { poseidon2 } from "poseidon-lite";
+import { IncrementalMerkleTree } from "@zk-kit/incremental-merkle-tree";
 
 const base58 = base58check(keccak_256);
 
@@ -101,19 +100,18 @@ export function randomBigInt(){
 }
 
 export function initMerkleTree(){
-  const tree = new IncrementalMerkleTree(poseidon, 2, 254);
+  const tree = new IncrementalMerkleTree(poseidon2, 2, 254);
   return tree;
 }
 
-export function addCoinToTree(tree, coin){
-  const { cm } = coin
-  tree.addLeaf(cm)
+export function addCoinToTree(tree, cm){
+  tree.insert(cm)
   return tree
 }
 
 export function getMerkleProof(tree, cm){
   const index = tree.indexOf(cm)
-  const merkleProof = tree.getProof(index)
+  const merkleProof = tree.createProof(index)
   const treeSiblings = merkleProof.siblings.map((s) => s[0]);
   const treePathIndices = merkleProof.pathIndices
 

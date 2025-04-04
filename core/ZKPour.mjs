@@ -17,8 +17,6 @@ export async function buildProof (ask, oldCoin, c1, c2) {
     apk_new: [c1.apk, c2.apk],
     v_new: [c1.value, c2.value],
     rho_new: [c1.rho, c2.rho],
-    r_new: [c1.r, c2.r],
-    s_new: [c1.s, c2.s],
   }
   console.log(input);
 

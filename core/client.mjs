@@ -202,19 +202,19 @@ export class DotcoinClient {
     const {coin, encryptedCoin} = common.createShieldedCoin(value, this.shieldedTransmissionKey);
     const tx = {
       utxoIns: [],
-      utxoOuts: [{secrets: encryptedCoin, cm: coin.cm}]
+      utxoOuts: [{cm: coin.cm}]
     }
     return {coin, tx}
   }
 
   async createPourTransaction (value, change, recipientKey) {
-    const { coin:c1 , encryptedCoin:encryptedC1 } = common.createShieldedCoin(value, recipientKey);
-    const { coin:c2 , encryptedCoin:encryptedC2 } = common.createShieldedCoin(change, this.shieldedTransmissionKey);
+    const {coin: c1} = common.createShieldedCoin(value, recipientKey);
+    const {coin: c2} = common.createShieldedCoin(change, this.shieldedTransmissionKey);
 
     const tx = {
       utxoOuts:[
-        {secrets: encryptedC1, cm: c1.cm},
-        {secrets: encryptedC2, cm: c2.cm}
+        { cm: c1.cm },
+        { cm: c2.cm }
       ]
     }
 
