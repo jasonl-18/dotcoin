@@ -10,25 +10,21 @@ const pourwasm = fs.readFileSync(path.join(__dirname, '../circuits/pour/pour_js/
 const pourzkey = fs.readFileSync(path.join(__dirname, "../zksetup/pour_0000.zkey"));
 const vKey = JSON.parse(fs.readFileSync(path.join(__dirname, "../zksetup/verification_key.json")));
 
-export async function buildProof (ask, oldCoin, c1, c2) {
+export async function buildProof (ask, oldCoin, c1, c2, merkleProof) {
   const input = {
     ask: ask,
     ...oldCoin,
+    treeSiblings: merkleProof.siblings,
+    treePathIndices: merkleProof.pathIndices,
     apk_new: [c1.apk, c2.apk],
     v_new: [c1.value, c2.value],
     rho_new: [c1.rho, c2.rho],
   }
-  console.log(input);
-
   const builder = pourWitnessBuilder.default;
   const pourWC = await builder(pourwasm)
-  pourWC
   const witness = await pourWC.calculateWTNSBin(input, 0)
 
   const { proof, publicSignals } = await snarkjs.groth16.prove(pourzkey, witness)
-  console.log("Proof:", proof);
-  console.log("Public Signals:", publicSignals);
-
   return { proof, publicSignals };
 }
 

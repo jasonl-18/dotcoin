@@ -10,9 +10,6 @@ template Pour() {
   signal input value;
   signal input rho;
   signal input cm;
-  // signal input merkle_root;
-  // signal input treeSiblings[20];
-  // signal input treePathIndices[20];
 
   // Verify input coin
   component cm_hasher = Poseidon(3);
@@ -26,16 +23,16 @@ template Pour() {
   sn_old <== sn_hasher.out;
 
   // Merkle Proof of old coin CM
-  // signal input treeSiblings[20];
-  // signal input treePathIndices[20];
-
-  // component tree = MerkleTreeInclusionProof(20);
-  // tree.leaf <== cm;
-  // for (var i = 0; i < levels; i++) {
-  //   tree.siblings[i] <== treeSiblings[i];
-  //   tree.pathIndices[i] <== treePathIndices[i];
-  // }
-  // tree.root === merkle_root;
+  signal input treeSiblings[20];
+  signal input treePathIndices[20];
+  signal output merkle_root;
+  component tree = MerkleTreeInclusionProof(20);
+  tree.leaf <== cm;
+  for (var i = 0; i < 20; i++) {
+    tree.siblings[i] <== treeSiblings[i];
+    tree.pathIndices[i] <== treePathIndices[i];
+  }
+  merkle_root <== tree.root;
 
   // Verify secret/public key pairing
   component a_hasher = Poseidon(1);

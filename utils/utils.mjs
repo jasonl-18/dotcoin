@@ -100,7 +100,7 @@ export function randomBigInt(){
 }
 
 export function initMerkleTree(){
-  const tree = new IncrementalMerkleTree(poseidon2, 2, 254);
+  const tree = new IncrementalMerkleTree(poseidon2, 20, BigInt(0), 2);
   return tree;
 }
 
@@ -112,11 +112,13 @@ export function addCoinToTree(tree, cm){
 export function getMerkleProof(tree, cm){
   const index = tree.indexOf(cm)
   const merkleProof = tree.createProof(index)
+  return merkleProof;
+}
+
+export function getMerkleInfo (merkleProof) {
   const treeSiblings = merkleProof.siblings.map((s) => s[0]);
   const treePathIndices = merkleProof.pathIndices
-
-  return {
-    merkleProof,
+  return {    
     treeSiblings,
     treePathIndices
   }

@@ -8,7 +8,9 @@ import * as utils from "../utils/utils.mjs";
 import * as common from "./common.mjs";
 import * as crypto from 'crypto';
 
-import { poseidon1, poseidon3 } from "poseidon-lite";
+import { poseidon1, poseidon2, poseidon3 } from "poseidon-lite";
+import * as ZKPour from "../core/ZKPour.mjs";
+
 
 export class ClientError extends Error {
   constructor(message) {
@@ -199,7 +201,7 @@ export class DotcoinClient {
   }
 
   async createMintTransaction(value) {
-    const {coin, encryptedCoin} = common.createShieldedCoin(value, this.shieldedTransmissionKey);
+    const {coin} = common.createShieldedCoin(value, this.shieldedTransmissionKey);
     const tx = {
       utxoIns: [],
       utxoOuts: [{cm: coin.cm}]
@@ -207,17 +209,23 @@ export class DotcoinClient {
     return {coin, tx}
   }
 
-  async createPourTransaction (value, change, recipientKey) {
+  async createPourTransaction (inputCoin, merkleProof, value, change, recipientKey) {
     const {coin: c1} = common.createShieldedCoin(value, recipientKey);
     const {coin: c2} = common.createShieldedCoin(change, this.shieldedTransmissionKey);
 
+    const oldSn = poseidon2([inputCoin.rho, this.shieldedPrivateKey])    
+    const { proof, publicSignals } = await ZKPour.buildProof(this.shieldedPrivateKey, inputCoin, c1, c2, merkleProof)
     const tx = {
+      utxoIns:[
+        {cm: inputCoin.cm, sn:oldSn}
+      ],
       utxoOuts:[
         { cm: c1.cm },
         { cm: c2.cm }
-      ]
+      ],
+      proof: proof,
+      publicSignals: publicSignals
     }
-
     return {tx, c1, c2}
   }
 }

@@ -5,6 +5,7 @@ import { DatabaseWrite } from "../database/database-write.mjs";
 
 import * as utils from "../utils/utils.mjs";
 import * as common from "./common.mjs";
+import * as ZKPour from "../core/ZKPour.mjs";
 
 export class ValidationError extends Error {
   constructor(message) {
@@ -35,11 +36,46 @@ export class DotcoinServer {
   async addTransaction(txParams) {
     
     //await this.verifyTransaction(txParams)
+    await this.verifyShieldedTransaction(txParams);
+    for (let utxoCoin of txParams.utxoOuts){
+      this.merkleTree = utils.addCoinToTree(this.merkleTree, utxoCoin.cm);
+    }
+
+    // if (txParams.utxoIns != null){
+    //   this.nullifierSet.add(txParams.utxoIns[0].sn);
+    // }
     await this.db.addTransaction(txParams)
     //await this.db.spendUtxos(txParams._id, txParams.utxoIns)
     return txParams
   }
 
+  async verifyShieldedTransaction(txParams) {
+    if (txParams.proof != null && txParams.publicSignals != null) {
+      const valid = ZKPour.verifyProof(txParams.publicSignals ,txParams.proof);
+      if (!valid){ throw new ValidationError('Provided Proof and public signals are not valid')};
+
+      let signalsArr = [txParams.utxoIns[0].sn, this.merkleTree.root, txParams.utxoOuts[0].cm, txParams.utxoOuts[1].cm]
+      signalsArr = signalsArr.map(val => val.toString())
+      
+      for (let i in signalsArr.length) {
+        if (signalsArr[i] != publicSignals[i]){ throw new ValidationError('Given transaction parameters do not match public signals') }
+      }
+      
+      for (let utxoCoin of txParams.utxoIns) {
+        if (this.nullifierSet.has(utxoCoin.sn)) { throw new ValidationError('Serial number has already been used')}
+      }
+    }
+  }
+
+  async getMerkleProof (cm) {
+    try {
+      const merkleProof = utils.getMerkleProof(this.merkleTree, cm);
+      return merkleProof;
+    } catch (err) {
+      throw new ValidationError('Commitment does not exist in the tree')
+    }
+
+  }
   async verifyTransaction(txParams, coinbase = false){
     //Check input is not null
     if(txParams == null){

@@ -37,8 +37,6 @@ describe("Testing Core Features", function () {
   it("it should mint a coin", async function () {
 
     const {coin, tx} = await client1.createMintTransaction(10, 0)
-    console.log(coin)
-    console.log(tx)
 
     // const cm = tx.utxoOuts[0].cm
 
@@ -51,11 +49,15 @@ describe("Testing Core Features", function () {
   })
 
   it("it should create a pour transaction", async function () {
-    const { coin:oldCoin, tx:tx_mint } = await client1.createMintTransaction(10, 0)
-    const { tx:tx_pour , c1, c2 } = await client1.createPourTransaction(7, 3, client2.shieldedTransmissionKey);
+    const { coin:cA1, tx:tx_mint_cA1 } = await client1.createMintTransaction(100, 0)
+    await server.addTransaction(tx_mint_cA1);
+    const { coin:cA2, tx:tx_mint_cA2 } = await client1.createMintTransaction(50, 0)
+    await server.addTransaction(tx_mint_cA2);
+
+    const merkleProof = await server.getMerkleProof(cA1.cm);
+    const { tx:tx_pour , c1, c2 } = await client1.createPourTransaction(cA1, merkleProof, 10, 90, client2.shieldedTransmissionKey);
+    await server.addTransaction(tx_pour);
     console.log(tx_pour)
-    const { proof, publicSignals } = await ZKPour.buildProof(client1.shieldedPrivateKey, oldCoin, c1, c2)
-    console.log(await ZKPour.verifyProof(publicSignals, proof))
   })
 
   // it("it should create the genesis block", async function () {
