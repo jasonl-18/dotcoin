@@ -122,6 +122,7 @@ describe("Testing Core Features", function () {
   it("does nothing but print the merkle tree", async function () {
     const tree = await server.merkleTree;
     console.log(tree.leaves);
+    console.log(server.nullifierSet);
   })
 
   // it("it should create the genesis block", async function () {
