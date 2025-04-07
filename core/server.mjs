@@ -63,6 +63,7 @@ export class DotcoinServer {
       
       for (let utxoCoin of txParams.utxoIns) {
         if (this.nullifierSet.has(utxoCoin.sn)) { throw new ValidationError('Serial number has already been used')}
+        this.nullifierSet.add(utxoCoin.sn)
       }
     }
   }
